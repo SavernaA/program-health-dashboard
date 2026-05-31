@@ -1,92 +1,70 @@
 # iOS Release Program Health Dashboard
 
-A production-style Engineering Program Manager tool for tracking OS release health across multiple engineering teams — built with React and powered by the Claude API for real-time executive summary generation.
+A program management tool I built to track OS release health across engineering teams — powered by React and the Claude API.
 
-**Live demo:** [saverna-program-dashboard.vercel.app](#) ← deploy and add link
-
----
+**Live demo:** [saverna-program-dashboard](https://main.d1p5y0vbc7xrm3.amplifyapp.com) — deployed on AWS Amplify
 
 ## What this is
 
-This dashboard simulates the program management infrastructure an EPM uses to oversee an OS release cycle from planning through convergence to release. It tracks milestone status across four engineering teams, surfaces active risks, calculates overall program health, and generates VP-ready executive status updates using the Claude API.
-
-It was built to demonstrate two things simultaneously:
-- How I think about engineering program management — milestone gates, risk registers, convergence phases, executive communication
-- How I work with agentic AI tools to build, validate, and iterate on real software
-
----
+I built this to simulate what real program management looks like during an OS release cycle. It tracks milestone status across four engineering teams, flags active risks, calculates overall program health, and uses the Claude API to generate a quick executive status update based on whatever the current team data shows.
 
 ## Features
 
-- **Phase tracker** — visualizes the full OS release lifecycle: Planning → Development → Convergence → Release
-- **Team milestone status** — four engineering teams with real milestone gates and interactive status cycling (On Track / At Risk / Blocked)
-- **Program health indicator** — automatically calculates overall program health based on team statuses
-- **Risk register** — structured table of active risks with owners, impact ratings, and mitigations
-- **AI executive summary** — calls the Claude API live to generate a 3-4 sentence VP-ready status update based on current team health data
+- **Phase tracker** — shows where the program is in the release lifecycle: Planning → Development → Convergence → Release
+- **Team milestone status** — four teams with milestone gates you can click through (On Track / At Risk / Blocked)
+- **Program health indicator** — automatically reflects the worst team status, not the average
+- **Risk register** — active risks with owners, impact levels, and mitigations
+- **AI executive summary** — hits the Claude API and returns a 3-4 sentence VP-ready status update based on live data
 
----
+## How I built this
 
-## How I built this — the agentic AI collaboration process
-
-This project was built using Claude, Claude Code, ChatGPT, and GitHub Copilot as active collaborators. This section documents that process honestly — including what the AI got wrong and how I caught and corrected it.
+I used Claude as my primary collaborator throughout. I directed the structure, made the program management calls, and caught and corrected what the AI got wrong.
 
 ### What I directed the AI to build
 
-I started by describing the program structure I wanted — four engineering teams, an OS release phase bar, a risk register, and a live Claude API integration for executive summary generation. I specified the Apple design aesthetic, the EPM-specific language (convergence gates, milestone states, program health), and the data structure I wanted.
+Four engineering teams, a release phase bar, a risk register, and a live Claude API integration for executive summary generation. I defined the program management language — convergence gates, milestone states, worst-case health logic — and the overall data structure.
 
 ### What the AI got right
 
-The initial component structure, the status cycling logic, and the risk register table were all solid on the first pass. The Claude API integration prompt engineering was accurate.
+The initial component structure, status cycling logic, and risk register table were solid on the first pass. The Claude API prompt setup was also accurate.
 
 ### What the AI got wrong — and how I caught it
 
-**Issue 1 — Health indicator logic was inverted.**
-The first version flagged the program as "On Track" when teams were Blocked, because the AI mapped health to the majority status rather than the worst-case status. I caught this by testing edge cases — setting all four teams to Blocked and seeing "On Track" displayed. I directed a rewrite: health should reflect the worst team status, not the average. An EPM never reports green when anything is blocked.
+**Issue 1 — Health indicator logic was inverted.** It was showing "On Track" even when teams were Blocked. I caught it by setting all four teams to Blocked and watching the indicator stay green. I directed a rewrite: program health should always reflect the worst status, not the majority. A program is never green when something is blocked.
 
-**Issue 2 — Executive summary prompt was too verbose.**
-The initial prompt produced summaries with headers, bullet points, and filler phrases like "I am pleased to report." I rewrote the prompt with explicit constraints: no bullets, no headers, no fluff, 3-4 sentences, Apple tone. The second output was significantly sharper.
+**Issue 2 — Executive summary prompt was too verbose.** The first output had headers, bullet points, and phrases like "I am pleased to report." I rewrote the prompt with hard constraints: no bullets, no headers, no filler, 3-4 sentences, crisp tone. Much better on the second pass.
 
-**Issue 3 — Risk register had no visual hierarchy.**
-The first pass rendered all risks with identical styling. I directed the AI to add color-coded impact levels (High in red, Medium in amber, Low in green) so a VP scanning the table can immediately identify critical items. This is standard EPM practice — the AI didn't know that, I did.
+**Issue 3 — Risk register had no visual hierarchy.** Everything looked the same. I directed the AI to add color-coded impact levels — High in red, Medium in amber, Low in green — so critical items are immediately visible.
 
-**Issue 4 — Component structure was monolithic.**
-The initial build put everything in one 400-line file. I directed a refactor into separate components (Dashboard, TeamCard, RiskRegister, ExecutiveSummary) with a centralized data file. This reflects how a real engineering team would maintain this codebase.
+**Issue 4 — Component structure was monolithic.** The first version was one 400-line file. I directed a refactor into separate components (Dashboard, TeamCard, RiskRegister, ExecutiveSummary) with a centralized data file.
 
 ### What I validated before merging
 
-- All status cycle transitions tested manually across all four teams
-- Program health logic verified against all edge case combinations
+- All status transitions tested manually across all four teams
+- Program health logic checked against every edge case combination
 - Claude API response handling tested for empty content and network errors
-- Design reviewed against Apple's Human Interface Guidelines spacing and typography principles
 
----
+## Program management decisions
 
-## Program management context
+**Why worst-case health, not average**
+If one team is blocked, the program is at risk. That needs to be visible immediately — not averaged away.
 
-This tool reflects how I think about OS release programs. A few design decisions worth noting:
-
-**Why worst-case health, not average health**
-An EPM's job is to surface risk, not hide it. If one team is Blocked, the program is at risk regardless of how the other three are doing. Executive leadership needs to know immediately.
-
-**Why the risk register uses owners, not just descriptions**
-Unowned risks don't get resolved. Every risk in a real program has a named owner who is accountable for the mitigation. Tracking that in a visible register creates the accountability loop.
+**Why risks have owners**
+Unowned risks don't get resolved. Naming an owner creates the accountability loop that actually drives mitigation.
 
 **Why the executive summary is AI-generated but human-reviewed**
-The Claude API generates the summary based on live data — but an EPM always reads and edits before sending. This tool is designed to accelerate drafting, not replace judgment. In a real program, I'd review the output, adjust for context the tool doesn't have, and own the final communication.
+The Claude API drafts it from live data — but I'd always read and edit before sending. The tool accelerates drafting, it doesn't replace judgment.
 
-**Why convergence gets its own phase**
-Apple's OS release process treats convergence as a distinct, critical phase — not just "late development." Convergence means the codebase is hardening, features are locked, and every new change requires explicit approval. An EPM who doesn't understand convergence can't effectively manage an OS release program.
-
----
+**Why convergence is its own phase**
+Convergence isn't just late development. The codebase is hardening, features are locked, and every change needs explicit approval. It deserves its own gate.
 
 ## Tech stack
 
-- **React** — component architecture with hooks
-- **Vite** — local development and build
-- **Claude API** (`claude-sonnet-4-20250514`) — live executive summary generation
-- **GitHub Actions** — CI pipeline for lint and build validation
-
----
+- React — component architecture with hooks
+- Vite — local development and build
+- Claude API (claude-sonnet-4-20250514) — live executive summary generation
+- AWS Amplify — deployment and hosting
+- GitHub Actions — CI pipeline for lint and build validation
 
 ## Setup
 
@@ -94,36 +72,17 @@ Apple's OS release process treats convergence as a distinct, critical phase — 
 git clone https://github.com/SavernaA/program-health-dashboard
 cd program-health-dashboard
 npm install
-```
-
-Create a `.env` file:
-```
-VITE_ANTHROPIC_API_KEY=your_api_key_here
-```
-
-```bash
 npm run dev
 ```
 
----
+### Environment Variables
 
-## Program artifacts
-
-The `/program` folder contains supporting EPM documents that provide context for how this tool fits into a real program management workflow:
-
-- [`MILESTONE_PLAN.md`](./program/MILESTONE_PLAN.md) — phased milestone plan for an OS release cycle
-- [`RISK_REGISTER.md`](./program/RISK_REGISTER.md) — full risk register template with ownership and escalation paths
-- [`WEEKLY_STATUS_TEMPLATE.md`](./program/WEEKLY_STATUS_TEMPLATE.md) — weekly program status report template for engineering managers and executive leadership
-- [`RACI.md`](./program/RACI.md) — responsibility matrix across engineering, design, QA, and leadership
-
----
+The Claude API integration requires an Anthropic API key, configured as an environment variable in AWS Amplify.
 
 ## Why I built this
 
-Engineering Program Manager roles at Apple require both technical credibility and program leadership instincts. Most candidates demonstrate one or the other. This project is an attempt to demonstrate both at once — a working technical artifact that reflects genuine EPM thinking.
-
-The agentic AI section above is not a disclaimer. It is the point. Knowing how to direct AI tools, validate their output, catch their mistakes, and produce production-quality results from the collaboration is an increasingly critical engineering skill. I wanted to document that process transparently rather than pretend the code emerged fully formed.
+I wanted to show how I think about program management — not just describe it. Knowing how to direct AI tools, validate their output, catch their mistakes, and ship something real is a skill I wanted to demonstrate openly. This is that.
 
 ---
 
-*Built by Saverna Ahmad · [github.com/SavernaA](https://github.com/SavernaA) · [linkedin.com/in/saverna-ahmad-40657166](https://linkedin.com/in/saverna-ahmad-40657166)*
+Built by Saverna Ahmad · [github.com/SavernaA](https://github.com/SavernaA) · [linkedin.com/in/saverna-ahmad-40657166](https://linkedin.com/in/saverna-ahmad-40657166)
